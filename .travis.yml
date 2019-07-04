@@ -1,0 +1,26 @@
+sudo: required
+services:
+    - docker
+
+# create a docker image of the project that we need to run the test of
+before_install:
+  - docker build -t mlawand/react-test -f ./client/Dockerfile.dev ./client
+
+# run the test
+script:
+  - docker run mlawand/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t mlawand/multi-client ./client
+  - docker build -t mlawand/multi-nginx ./nginx
+  - docker build -t mlawand/multi-server ./server
+  - docker built -t mlawand/multi-worker ./worker
+
+# Login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+# take those images and push them to docker hub
+  - docker push mlawand/multi-client
+  - docker push mlawand/multi-nginx
+  - docker push mlawand/multi-server
+  - docker push mlawand/multi-worker
